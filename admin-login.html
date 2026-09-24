@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ADMIN // INTELLIGENCE</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+    <main class="login-container">
+
+        <div class="login-box">
+
+            <div class="system-status">
+                ● RESTRICTED ACCESS
+            </div>
+
+
+            <h1>
+                COMMAND
+            </h1>
+
+
+            <p class="subtitle">
+                ADMINISTRATOR AUTHENTICATION
+            </p>
+
+
+            <div class="input-group">
+
+                <label>
+                    ADMIN EMAIL
+                </label>
+
+                <input
+                    id="email"
+                    type="email"
+                    placeholder="ENTER ADMIN EMAIL"
+                    autocomplete="username"
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    PASSWORD
+                </label>
+
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="ENTER PASSWORD"
+                    autocomplete="current-password"
+                >
+
+            </div>
+
+
+            <button
+                id="loginBtn"
+                class="allow-button"
+            >
+                ACCESS COMMAND CENTER
+            </button>
+
+
+            <p id="message"></p>
+
+        </div>
+
+    </main>
+
+
+    <!-- SUPABASE -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <script>
+
+        const SUPABASE_URL =
+            "https://gtdzweprioukrqkfmnhc.supabase.co";
+
+
+        const SUPABASE_KEY =
+            "sb_publishable_muKvWec3rToycmBe3zmJLQ_sE49NyH7";
+
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+
+        const email =
+            document.getElementById("email");
+
+
+        const password =
+            document.getElementById("password");
+
+
+        const loginBtn =
+            document.getElementById("loginBtn");
+
+
+        const message =
+            document.getElementById("message");
+
+
+        // ========================================
+        // ADMIN LOGIN
+        // ========================================
+
+        loginBtn.addEventListener(
+            "click",
+            async () => {
+
+                const emailValue =
+                    email.value.trim();
+
+
+                const passwordValue =
+                    password.value;
+
+
+                if (
+                    !emailValue ||
+                    !passwordValue
+                ) {
+
+                    message.style.color =
+                        "#ff7373";
+
+                    message.textContent =
+                        "CREDENTIALS REQUIRED";
+
+                    return;
+
+                }
+
+
+                message.style.color =
+                    "#8dffb8";
+
+                message.textContent =
+                    "AUTHENTICATING...";
+
+
+                const {
+                    data,
+                    error
+                } = await supabaseClient.auth
+                    .signInWithPassword({
+
+                        email:
+                            emailValue,
+
+                        password:
+                            passwordValue
+
+                    });
+
+
+                if (error) {
+
+                    console.error(
+                        "ADMIN LOGIN ERROR:",
+                        error
+                    );
+
+
+                    message.style.color =
+                        "#ff7373";
+
+                    message.textContent =
+                        "ACCESS DENIED";
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "ADMIN AUTHENTICATED:",
+                    data.user.email
+                );
+
+
+                message.style.color =
+                    "#55ff9a";
+
+                message.textContent =
+                    "ACCESS GRANTED";
+
+
+                setTimeout(() => {
+
+                    window.location.href =
+                        "admin.html";
+
+                }, 500);
+
+            }
+        );
+
+
+        // ========================================
+        // ENTER KEY
+        // ========================================
+
+        password.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    loginBtn.click();
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>

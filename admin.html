@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>INTELLIGENCE // COMMAND CENTER</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #050806;
+            color: #d8ffe8;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow: hidden;
+        }
+
+        .topbar {
+            height: 64px;
+            background: #080d0b;
+            border-bottom: 1px solid #294435;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .brand {
+            font-size: 17px;
+            font-weight: bold;
+            letter-spacing: 4px;
+        }
+
+        .status {
+            color: #55ff9a;
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        .dashboard {
+            height: calc(100vh - 64px);
+            display: grid;
+            grid-template-columns: 290px 1fr;
+        }
+
+        .sidebar {
+            background: #080d0b;
+            border-right: 1px solid #294435;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            color: #62776a;
+            font-size: 10px;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+
+        .stats {
+            border: 1px solid #294435;
+            background: #0b120f;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stats-label {
+            color: #62776a;
+            font-size: 9px;
+            letter-spacing: 2px;
+        }
+
+        .stats-number {
+            color: #55ff9a;
+            font-size: 32px;
+            margin-top: 5px;
+        }
+
+        .connection {
+            font-size: 9px;
+            color: #62776a;
+            margin-top: 8px;
+        }
+
+        .connection.online {
+            color: #55ff9a;
+        }
+
+        .connection.error {
+            color: #ff7373;
+        }
+
+        .user-card {
+            border: 1px solid #263d30;
+            background: #0b120f;
+            padding: 13px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .user-card:hover {
+            border-color: #55ff9a;
+            background: #101b15;
+        }
+
+        .user-name {
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        .user-status {
+            color: #55ff9a;
+            font-size: 9px;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        .user-time {
+            color: #62776a;
+            font-size: 9px;
+            margin-top: 5px;
+        }
+
+        .user-coordinates {
+            color: #52665a;
+            font-size: 8px;
+            margin-top: 5px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: #0a100d;
+            color: #d8ffe8;
+            border: 1px solid #315b45;
+        }
+
+        .leaflet-popup-tip {
+            background: #0a100d;
+        }
+
+        .popup-name {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .popup-live {
+            color: #55ff9a;
+            margin-top: 5px;
+            font-size: 10px;
+        }
+
+        .loading {
+            color: #62776a;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<header class="topbar">
+
+    <div class="brand">
+        INTELLIGENCE // COMMAND
+    </div>
+
+    <div
+        id="systemStatus"
+        class="status"
+    >
+        ● CONNECTING
+    </div>
+
+</header>
+
+
+<main class="dashboard">
+
+
+    <aside class="sidebar">
+
+        <div class="section-title">
+            NETWORK STATUS
+        </div>
+
+
+        <div class="stats">
+
+            <div class="stats-label">
+                ACTIVE OPERATIVES
+            </div>
+
+            <div
+                id="activeCount"
+                class="stats-number"
+            >
+                0
+            </div>
+
+            <div
+                id="connectionStatus"
+                class="connection"
+            >
+                Connecting...
+            </div>
+
+        </div>
+
+
+        <div class="section-title">
+            LIVE OPERATIVES
+        </div>
+
+
+        <div id="userList">
+
+            <div class="loading">
+                LOADING OPERATIVES...
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <div id="map"></div>
+
+
+</main>
+
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
+
+<script>
+
+    // ========================================
+    // SUPABASE CONFIG
+    // ========================================
+
+    const SUPABASE_URL =
+        "https://gtdzweprioukrqkfmnhc.supabase.co";
+
+    const SUPABASE_KEY =
+        "sb_publishable_muKvWec3rToycmBe3zmJLQ_sE49NyH7";
+
+
+    const supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+
+    console.log(
+        "ADMIN: SUPABASE CLIENT CREATED"
+    );
+
+
+    // ========================================
+    // ELEMENTS
+    // ========================================
+
+    const activeCount =
+        document.getElementById(
+            "activeCount"
+        );
+
+    const userList =
+        document.getElementById(
+            "userList"
+        );
+
+    const systemStatus =
+        document.getElementById(
+            "systemStatus"
+        );
+
+    const connectionStatus =
+        document.getElementById(
+            "connectionStatus"
+        );
+
+
+    // ========================================
+    // MAP
+    // ========================================
+
+    const map =
+        L.map("map")
+            .setView(
+                [-2.5, 118],
+                5
+            );
+
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+
+            attribution:
+                "&copy; OpenStreetMap"
+        }
+    ).addTo(map);
+
+
+    // ========================================
+    // STORAGE
+    // ========================================
+
+    const markers = {};
+
+    const users = {};
+
+
+    // ========================================
+    // ESCAPE HTML
+    // ========================================
+
+    function escapeHTML(value) {
+
+        return String(value)
+
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+    }
+
+
+    // ========================================
+    // CREATE MARKER
+    // ========================================
+
+    function createMarker(user) {
+
+        console.log(
+            "CREATING MARKER:",
+            user.username
+        );
+
+
+        const marker =
+            L.marker([
+                Number(user.latitude),
+                Number(user.longitude)
+            ]).addTo(map);
+
+
+        marker.bindPopup(`
+
+            <div class="popup-name">
+                ${escapeHTML(user.username)}
+            </div>
+
+            <div class="popup-live">
+                ● LIVE LOCATION
+            </div>
+
+            <div style="margin-top:6px;font-size:9px;">
+                ${Number(user.latitude).toFixed(6)},
+                ${Number(user.longitude).toFixed(6)}
+            </div>
+
+        `);
+
+
+        markers[user.username] =
+            marker;
+
+    }
+
+
+    // ========================================
+    // UPDATE MARKER
+    // ========================================
+
+    function updateMarker(user) {
+
+        const latitude =
+            Number(user.latitude);
+
+        const longitude =
+            Number(user.longitude);
+
+
+        if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude)
+        ) {
+
+            console.error(
+                "INVALID COORDINATES:",
+                user
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !markers[user.username]
+        ) {
+
+            createMarker(user);
+
+            return;
+
+        }
+
+
+        markers[user.username]
+            .setLatLng([
+                latitude,
+                longitude
+            ]);
+
+
+        markers[user.username]
+            .setPopupContent(`
+
+                <div class="popup-name">
+                    ${escapeHTML(user.username)}
+                </div>
+
+                <div class="popup-live">
+                    ● LIVE LOCATION
+                </div>
+
+                <div style="margin-top:6px;font-size:9px;">
+                    ${latitude.toFixed(6)},
+                    ${longitude.toFixed(6)}
+                </div>
+
+            `);
+
+    }
+
+
+    // ========================================
+    // LOAD USERS FROM DATABASE
+    // ========================================
+
+    async function loadUsers() {
+
+        console.log(
+            "ADMIN: LOADING LOCATIONS..."
+        );
+
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+
+            .from("locations")
+
+            .select("*");
+
+
+        if (error) {
+
+            console.error(
+                "ADMIN SELECT ERROR:",
+                error
+            );
+
+
+            connectionStatus.textContent =
+                "DATABASE READ FAILED";
+
+            connectionStatus.className =
+                "connection error";
+
+            systemStatus.textContent =
+                "● DATABASE ERROR";
+
+            return;
+
+        }
+
+
+        console.log(
+            "ADMIN: LOCATIONS RECEIVED:",
+            data
+        );
+
+
+        data.forEach(user => {
+
+            users[user.username] =
+                user;
+
+            updateMarker(user);
+
+        });
+
+
+        updateUserList();
+
+        fitMap();
+
+
+        connectionStatus.textContent =
+            "DATABASE CONNECTED";
+
+        connectionStatus.className =
+            "connection online";
+
+        systemStatus.textContent =
+            "● LIVE NETWORK";
+
+    }
+
+
+    // ========================================
+    // USER LIST
+    // ========================================
+
+    function updateUserList() {
+
+        userList.innerHTML = "";
+
+
+        const list =
+            Object.values(users);
+
+
+        activeCount.textContent =
+            list.length;
+
+
+        if (list.length === 0) {
+
+            userList.innerHTML = `
+
+                <div class="loading">
+                    NO ACTIVE OPERATIVES
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        list.forEach(user => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "user-card";
+
+
+            card.innerHTML = `
+
+                <div class="user-name">
+                    ● ${escapeHTML(
+                        user.username
+                    )}
+                </div>
+
+                <div class="user-status">
+                    ONLINE
+                </div>
+
+                <div class="user-time">
+                    UPDATED:
+                    ${new Date(
+                        user.last_updated
+                    ).toLocaleTimeString()}
+                </div>
+
+                <div class="user-coordinates">
+                    ${Number(user.latitude).toFixed(6)}
+                    /
+                    ${Number(user.longitude).toFixed(6)}
+                </div>
+
+            `;
+
+
+            card.addEventListener(
+                "click",
+                () => {
+
+                    map.setView(
+                        [
+                            Number(user.latitude),
+                            Number(user.longitude)
+                        ],
+                        16
+                    );
+
+
+                    if (
+                        markers[user.username]
+                    ) {
+
+                        markers[user.username]
+                            .openPopup();
+
+                    }
+
+                }
+            );
+
+
+            userList.appendChild(card);
+
+        });
+
+    }
+
+
+    // ========================================
+    // FIT MAP
+    // ========================================
+
+    function fitMap() {
+
+        const markerArray =
+            Object.values(markers);
+
+
+        if (
+            markerArray.length === 0
+        ) {
+
+            return;
+
+        }
+
+
+        const group =
+            L.featureGroup(
+                markerArray
+            );
+
+
+        map.fitBounds(
+            group
+                .getBounds()
+                .pad(0.25)
+        );
+
+    }
+
+
+    // ========================================
+    // REALTIME
+    // ========================================
+
+    function startRealtime() {
+
+        console.log(
+            "ADMIN: STARTING REALTIME..."
+        );
+
+
+        const channel =
+            supabaseClient
+
+                .channel(
+                    "admin-location-channel"
+                )
+
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "*",
+                        schema: "public",
+                        table: "locations"
+                    },
+                    (payload) => {
+
+                        console.log(
+                            "ADMIN REALTIME EVENT:",
+                            payload
+                        );
+
+
+                        // INSERT
+
+                        if (
+                            payload.eventType ===
+                            "INSERT"
+                        ) {
+
+                            const user =
+                                payload.new;
+
+
+                            users[user.username] =
+                                user;
+
+
+                            updateMarker(
+                                user
+                            );
+
+
+                            updateUserList();
+
+                        }
+
+
+                        // UPDATE
+
+                        if (
+                            payload.eventType ===
+                            "UPDATE"
+                        ) {
+
+                            const user =
+                                payload.new;
+
+
+                            users[user.username] =
+                                user;
+
+
+                            updateMarker(
+                                user
+                            );
+
+
+                            updateUserList();
+
+                        }
+
+
+                        // DELETE
+
+                        if (
+                            payload.eventType ===
+                            "DELETE"
+                        ) {
+
+                            const username =
+                                payload.old.username;
+
+
+                            if (
+                                markers[username]
+                            ) {
+
+                                map.removeLayer(
+                                    markers[username]
+                                );
+
+                                delete markers[
+                                    username
+                                ];
+
+                            }
+
+
+                            delete users[
+                                username
+                            ];
+
+
+                            updateUserList();
+
+                        }
+
+                    }
+                )
+
+                .subscribe(
+                    (status) => {
+
+                        console.log(
+                            "REALTIME STATUS:",
+                            status
+                        );
+
+
+                        if (
+                            status ===
+                            "SUBSCRIBED"
+                        ) {
+
+                            systemStatus.textContent =
+                                "● LIVE NETWORK";
+
+                            connectionStatus.textContent =
+                                "REALTIME CONNECTED";
+
+                            connectionStatus.className =
+                                "connection online";
+
+                        }
+
+
+                        if (
+                            status ===
+                            "CHANNEL_ERROR"
+                        ) {
+
+                            systemStatus.textContent =
+                                "● REALTIME ERROR";
+
+                            connectionStatus.textContent =
+                                "REALTIME FAILED";
+
+                            connectionStatus.className =
+                                "connection error";
+
+                        }
+
+                    }
+                );
+
+    }
+
+
+    // ========================================
+    // AUTH + START
+    // ========================================
+
+    async function startAdmin() {
+
+        console.log(
+            "ADMIN: CHECKING AUTH..."
+        );
+
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .auth
+            .getSession();
+
+
+        if (error) {
+
+            console.error(
+                "AUTH ERROR:",
+                error
+            );
+
+            window.location.href =
+                "admin-login.html";
+
+            return;
+
+        }
+
+
+        if (!data.session) {
+
+            console.log(
+                "ADMIN: NO SESSION"
+            );
+
+
+            window.location.href =
+                "admin-login.html";
+
+            return;
+
+        }
+
+
+        console.log(
+            "ADMIN AUTHENTICATED:",
+            data.session.user.email
+        );
+
+
+        await loadUsers();
+
+        startRealtime();
+
+    }
+
+
+    // ========================================
+    // START
+    // ========================================
+
+    startAdmin();
+
+</script>
+
+
+</body>
+
+</html>

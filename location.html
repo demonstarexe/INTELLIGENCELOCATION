@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>LOCATION ACCESS // INTELLIGENCE</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+    <main class="login-container">
+
+        <div class="login-box">
+
+            <div class="system-status">
+                ● SECURITY PROTOCOL
+            </div>
+
+            <h1>LOCATION</h1>
+
+            <p class="subtitle">
+                LOCATION ACCESS REQUEST
+            </p>
+
+            <div class="permission-icon">
+                ◎
+            </div>
+
+            <p class="permission-text">
+                INTELLIGENCE SYSTEM REQUESTS
+                ACCESS TO YOUR CURRENT LOCATION.
+            </p>
+
+            <p class="permission-warning">
+                YOUR LOCATION WILL ONLY BE SHARED
+                AFTER YOU APPROVE THIS REQUEST.
+            </p>
+
+            <div class="permission-buttons">
+
+                <button
+                    id="denyBtn"
+                    class="deny-button"
+                >
+                    NO
+                </button>
+
+                <button
+                    id="allowBtn"
+                    class="allow-button"
+                >
+                    YES
+                </button>
+
+            </div>
+
+            <p id="locationMessage"></p>
+
+        </div>
+
+    </main>
+
+
+    <!-- SUPABASE -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <script>
+
+        console.log("LOCATION PAGE LOADED");
+
+
+        // ========================================
+        // SUPABASE
+        // ========================================
+
+        const SUPABASE_URL =
+            "https://gtdzweprioukrqkfmnhc.supabase.co";
+
+
+        const SUPABASE_KEY =
+            "sb_publishable_muKvWec3rToycmBe3zmJLQ_sE49NyH7";
+
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+
+        console.log("SUPABASE CLIENT CREATED");
+
+
+        // ========================================
+        // USER
+        // ========================================
+
+        const username =
+            sessionStorage.getItem("username");
+
+
+        console.log(
+            "CURRENT USER:",
+            username
+        );
+
+
+        if (!username) {
+
+            console.log("NO USER - RETURNING TO LOGIN");
+
+            window.location.href = "index.html";
+
+        }
+
+
+        // ========================================
+        // ELEMENTS
+        // ========================================
+
+        const allowBtn =
+            document.getElementById("allowBtn");
+
+        const denyBtn =
+            document.getElementById("denyBtn");
+
+        const locationMessage =
+            document.getElementById("locationMessage");
+
+
+        console.log("ALLOW BUTTON:", allowBtn);
+
+        console.log("DENY BUTTON:", denyBtn);
+
+
+        // ========================================
+        // DATABASE TEST
+        // ========================================
+
+        
+
+
+        // ========================================
+        // DENY
+        // ========================================
+
+        denyBtn.addEventListener(
+            "click",
+            () => {
+
+                console.log(
+                    "USER CLICKED NO"
+                );
+
+
+                locationMessage.style.color =
+                    "#ff7373";
+
+
+                locationMessage.textContent =
+                    "LOCATION ACCESS DENIED";
+
+            }
+        );
+
+
+        // ========================================
+        // YES
+        // ========================================
+
+        allowBtn.addEventListener(
+            "click",
+            () => {
+
+                console.log(
+                    "USER CLICKED YES"
+                );
+
+
+                locationMessage.style.color =
+                    "#8dffb8";
+
+
+                locationMessage.textContent =
+                    "REQUESTING GPS ACCESS...";
+
+
+                if (!navigator.geolocation) {
+
+                    console.error(
+                        "GEOLOCATION NOT SUPPORTED"
+                    );
+
+
+                    locationMessage.style.color =
+                        "#ff7373";
+
+
+                    locationMessage.textContent =
+                        "GEOLOCATION NOT SUPPORTED";
+
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "STARTING GPS WATCH..."
+                );
+
+
+                startLiveLocation();
+
+            }
+        );
+
+
+        // ========================================
+        // LIVE LOCATION
+        // ========================================
+
+        function startLiveLocation() {
+
+            console.log(
+                "LIVE TRACKING FUNCTION STARTED"
+            );
+
+
+            const watchId =
+                navigator.geolocation.watchPosition(
+
+                    async (position) => {
+
+                        console.log(
+                            "GPS UPDATE RECEIVED"
+                        );
+
+
+                        const latitude =
+                            position.coords.latitude;
+
+
+                        const longitude =
+                            position.coords.longitude;
+
+
+                        const accuracy =
+                            position.coords.accuracy;
+
+
+                        console.log(
+                            "LATITUDE:",
+                            latitude
+                        );
+
+
+                        console.log(
+                            "LONGITUDE:",
+                            longitude
+                        );
+
+
+                        console.log(
+                            "ACCURACY:",
+                            accuracy,
+                            "meters"
+                        );
+
+
+                        locationMessage.style.color =
+                            "#55ff9a";
+
+
+                        locationMessage.textContent =
+                            "● LIVE LOCATION ACTIVE";
+
+
+                        // ==================================
+                        // SEND TO SUPABASE
+                        // ==================================
+
+                        console.log(
+                            "UPDATING SUPABASE..."
+                        );
+
+
+                        const {
+    error
+} = await supabaseClient
+
+    .from("locations")
+
+    .upsert(
+        {
+            username: username,
+            latitude: latitude,
+            longitude: longitude,
+            last_updated:
+                new Date().toISOString(),
+            is_online: true
+        },
+        {
+            onConflict: "username"
+        }
+    );
+
+
+                    if (error) {
+
+    console.error("DATABASE ERROR:", error);
+
+    locationMessage.style.color = "#ff7373";
+
+    locationMessage.textContent =
+        "DB ERROR: " + error.code;
+
+    alert(
+        "DATABASE ERROR\n\n" +
+        "Code: " + error.code + "\n\n" +
+        "Message: " + error.message + "\n\n" +
+        "Details: " + error.details
+    );
+
+    return;
+}
+
+                        console.log(
+                            "LOCATION UPDATED:",
+                            data
+                        );
+
+                    },
+
+
+                    // ==================================
+                    // GPS ERROR
+                    // ==================================
+
+                    (error) => {
+
+                        console.error(
+                            "GPS ERROR:",
+                            error
+                        );
+
+
+                        locationMessage.style.color =
+                            "#ff7373";
+
+
+                        if (
+                            error.code ===
+                            error.PERMISSION_DENIED
+                        ) {
+
+                            locationMessage.textContent =
+                                "LOCATION PERMISSION DENIED";
+
+                        }
+
+                        else if (
+                            error.code ===
+                            error.POSITION_UNAVAILABLE
+                        ) {
+
+                            locationMessage.textContent =
+                                "LOCATION UNAVAILABLE";
+
+                        }
+
+                        else if (
+                            error.code ===
+                            error.TIMEOUT
+                        ) {
+
+                            locationMessage.textContent =
+                                "LOCATION REQUEST TIMEOUT";
+
+                        }
+
+                        else {
+
+                            locationMessage.textContent =
+                                "GPS ERROR";
+
+                        }
+
+                    },
+
+
+                    // ==================================
+                    // OPTIONS
+                    // ==================================
+
+                    {
+
+                        enableHighAccuracy: true,
+
+                        timeout: 10000,
+
+                        maximumAge: 5000
+
+                    }
+
+                );
+
+
+            window.liveLocationWatchId =
+                watchId;
+
+
+            console.log(
+                "WATCH ID:",
+                watchId
+            );
+
+        }
+
+    </script>
+
+</body>
+
+</html>

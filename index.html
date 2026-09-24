@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>INTELLIGENCE // ACCESS</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+
+        .login-message {
+            margin-top: 18px;
+            font-size: 11px;
+            letter-spacing: 1px;
+            min-height: 18px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <main class="login-container">
+
+        <div class="login-box">
+
+            <div class="system-status">
+                ● SECURE ACCESS PROTOCOL
+            </div>
+
+
+            <h1>
+                INTELLIGENCE
+            </h1>
+
+
+            <p class="subtitle">
+                FIELD OPERATIVE ACCESS
+            </p>
+
+
+            <!-- USERNAME -->
+
+            <div class="input-group">
+
+                <label for="username">
+                    OPERATIVE ID
+                </label>
+
+                <input
+                    id="username"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="ENTER USERNAME"
+                >
+
+            </div>
+
+
+            <!-- PASSWORD -->
+
+            <div class="input-group">
+
+                <label for="password">
+                    ACCESS CODE
+                </label>
+
+                <input
+                    id="password"
+                    type="password"
+                    autocomplete="off"
+                    placeholder="ENTER PASSWORD"
+                >
+
+            </div>
+
+
+            <!-- LOGIN -->
+
+            <button
+                id="loginBtn"
+                class="allow-button"
+            >
+                ENTER SYSTEM
+            </button>
+
+
+            <p
+                id="loginMessage"
+                class="login-message"
+            ></p>
+
+
+        </div>
+
+    </main>
+
+
+    <script>
+
+        // ========================================
+        // ELEMENTS
+        // ========================================
+
+        const usernameInput =
+            document.getElementById("username");
+
+
+        const passwordInput =
+            document.getElementById("password");
+
+
+        const loginBtn =
+            document.getElementById("loginBtn");
+
+
+        const loginMessage =
+            document.getElementById("loginMessage");
+
+
+        // ========================================
+        // LOGIN
+        // ========================================
+
+        function login() {
+
+            const username =
+                usernameInput.value.trim();
+
+
+            const password =
+                passwordInput.value;
+
+
+            // ====================================
+            // CHECK EMPTY
+            // ====================================
+
+            if (!username) {
+
+                loginMessage.style.color =
+                    "#ff7373";
+
+                loginMessage.textContent =
+                    "OPERATIVE ID REQUIRED";
+
+                usernameInput.focus();
+
+                return;
+
+            }
+
+
+            if (!password) {
+
+                loginMessage.style.color =
+                    "#ff7373";
+
+                loginMessage.textContent =
+                    "ACCESS CODE REQUIRED";
+
+                passwordInput.focus();
+
+                return;
+
+            }
+
+
+            // ====================================
+            // ACCEPT ANY USERNAME + PASSWORD
+            // ====================================
+
+            sessionStorage.setItem(
+                "username",
+                username
+            );
+
+
+            /*
+             * Password hanya digunakan sebagai
+             * syarat masuk pada prototype ini.
+             *
+             * Kita tidak menyimpan password.
+             */
+
+
+            console.log(
+                "USER LOGIN:",
+                username
+            );
+
+
+            loginMessage.style.color =
+                "#55ff9a";
+
+
+            loginMessage.textContent =
+                "ACCESS GRANTED";
+
+
+            // ====================================
+            // GO TO LOCATION PAGE
+            // ====================================
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "location.html";
+
+            }, 500);
+
+        }
+
+
+        // ========================================
+        // BUTTON
+        // ========================================
+
+        loginBtn.addEventListener(
+            "click",
+            login
+        );
+
+
+        // ========================================
+        // ENTER KEY
+        // ========================================
+
+        usernameInput.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    passwordInput.focus();
+
+                }
+
+            }
+        );
+
+
+        passwordInput.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    login();
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
