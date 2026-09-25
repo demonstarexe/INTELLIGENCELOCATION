@@ -304,20 +304,15 @@
 
     .from("locations")
 
-    .upsert(
-        {
-            username: username,
-            latitude: latitude,
-            longitude: longitude,
-            last_updated:
-                new Date().toISOString(),
-            is_online: true
-        },
-        {
-            onConflict: "username"
-        }
-    );
-
+    const { data, error } = await supabaseClient
+    .from("locations")
+    .insert({
+        username: username,
+        latitude: latitude,
+        longitude: longitude,
+        last_updated: new Date().toISOString(),
+        is_online: true
+    });
 
                     if (error) {
 
